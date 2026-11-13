@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "sweety-server",
+			"path": ".."
+		},
+		{
+			"name": "client",
+			"path": "../../sweety-client/sweety/client"
+		}
+	],
+	"settings": {}
+}
