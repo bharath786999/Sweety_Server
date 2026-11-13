@@ -5,6 +5,7 @@ const { asyncHandler } = require('../middleware/errors');
 const { validateReading } = require('../utils/validate');
 const { isValidDate, todayInTz } = require('../utils/dates');
 const { SLOT_LABELS, SLOT_KEYS, MAX_PER_DAY } = require('../utils/constants');
+const { classify } = require('../utils/glucose');
 
 const router = express.Router();
 router.use(auth);
@@ -44,6 +45,18 @@ router.get('/', asyncHandler(async (req, res) => {
     params
   );
   res.json({ data: rows, page, limit, total });
+}));
+
+// GET /api/readings/export.csv - all of the user's readings, handy to share with a doctor.
+router.get('/export.csv', asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT ${COLUMNS} FROM readings WHERE user_id = $1 ORDER BY reading_date, ${SLOT_ORDER}`,
+    [req.userId]
+  );
+  const lines = rows.map((r) => `${r.date},${SLOT_LABELS[r.slot].replace(',', '')},${r.value},${classify(r.value)}`);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="sweety-readings.csv"');
+  res.send(['date,slot,value_mg_dl,status', ...lines].join('\n') + '\n');
 }));
 
 router.post('/', asyncHandler(async (req, res) => {

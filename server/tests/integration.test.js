@@ -46,6 +46,20 @@ run('API integration', () => {
     expect(res.body.readings).toHaveLength(4);
   });
 
+  test('time-in-range, trend and CSV export', async () => {
+    await add(tokenA, { date: '2026-01-09', slot: 'after_dinner', value: 250 });
+    const auth = { Authorization: `Bearer ${tokenA}` };
+    const mtd = await request.get(`/api/reports?type=mtd&date=${day}`).set(auth);
+    expect(mtd.body).toMatchObject({ count: 5, highCount: 1, lowCount: 0, inRangePct: 80 });
+    const trend = await request.get(`/api/reports/trend?date=${day}`).set(auth);
+    expect(trend.body.points).toHaveLength(2);
+    expect(trend.body.points[1]).toMatchObject({ date: day, avg: 105 });
+    const csv = await request.get('/api/readings/export.csv').set(auth);
+    expect(csv.status).toBe(200);
+    expect(csv.text.startsWith('date,slot,value_mg_dl,status')).toBe(true);
+    expect(csv.text).toContain('2026-01-09,After dinner,250,high');
+  });
+
   test('empty report returns zero count and nulls', async () => {
     const res = await request.get(`/api/reports?type=monthly&date=${day}`).set('Authorization', `Bearer ${tokenA}`);
     expect(res.body).toMatchObject({ count: 0, highest: null, lowest: null, average: null });

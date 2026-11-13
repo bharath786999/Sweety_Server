@@ -32,4 +32,10 @@ function getRange(type, dateStr) {
   }
 }
 
-module.exports = { isValidDate, todayInTz, getRange };
+function addDays(str, n) {
+  const d = new Date(`${str}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return fmt(d);
+}
+
+module.exports = { isValidDate, todayInTz, getRange, addDays };
